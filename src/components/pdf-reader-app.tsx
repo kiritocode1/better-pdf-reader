@@ -107,6 +107,8 @@ function PdfReaderAppContent() {
                 onClose={() => readingStats.setIsOpen(false)}
                 stats={readingStats.stats}
                 currentSessionFn={readingStats.stats.totalDuration as () => number}
+                isPaused={readingStats.isPaused}
+                onTogglePause={readingStats.togglePause}
             />
         </>
     );

@@ -9,9 +9,11 @@ export interface PageTime {
 export interface ReadingSession {
     startTime: number;
     totalDuration: number | (() => number);
+    getCurrentPageDuration: () => number;
     pagesRead: number;
     averageTimePerPage: number;
     history: PageTime[];
+    currentPage: number;
 }
 
 export function useReadingStats() {
@@ -22,8 +24,35 @@ export function useReadingStats() {
     const [startTime, setStartTime] = useState<number>(Date.now());
     const [history, setHistory] = useState<PageTime[]>([]);
 
+    // Pause state
+    const [isPaused, setIsPaused] = useState(false);
+    const pauseStartRef = useRef<number | null>(null);
+
     // Refs for tracking intervals without re-renders
     const lastPageParams = useRef({ page: 1, time: Date.now() });
+
+    // Helper: Adjust timestamps when resuming to ignore the paused duration
+    const togglePause = () => {
+        if (isPaused) {
+            // RESUMING
+            if (pauseStartRef.current) {
+                const pauseDuration = Date.now() - pauseStartRef.current;
+
+                // Shift the session start time forward by the pause duration
+                // So (Now - StartTime) will effectively exclude the pause
+                setStartTime(prev => prev + pauseDuration);
+
+                // Shift the current page's start time forward too
+                lastPageParams.current.time += pauseDuration;
+            }
+            pauseStartRef.current = null;
+            setIsPaused(false);
+        } else {
+            // PAUSING
+            pauseStartRef.current = Date.now();
+            setIsPaused(true);
+        }
+    };
 
     // Reset on new document
     useEffect(() => {
@@ -31,12 +60,25 @@ export function useReadingStats() {
             setStartTime(Date.now());
             setHistory([]);
             lastPageParams.current = { page: currentPage, time: Date.now() };
+            setIsPaused(false);
+            pauseStartRef.current = null;
         }
     }, [currentDocument?.id]);
 
     // Track page changes
     useEffect(() => {
         if (!currentDocument) return;
+
+        // If paused, we don't want to accumulate time for the PREVIOUS page.
+        // But if the user switches pages while paused, we should update the tracker 
+        // to start tracking the NEW page from "now" (which will be corrected on resume).
+
+        if (isPaused) {
+            // Just update the page index, don't touch the time or history.
+            // The time ref will be shifted when we unpause.
+            lastPageParams.current.page = currentPage;
+            return;
+        }
 
         const now = Date.now();
         const { page: lastPage, time: lastTime } = lastPageParams.current;
@@ -62,10 +104,22 @@ export function useReadingStats() {
             // Update refs
             lastPageParams.current = { page: currentPage, time: now };
         }
-    }, [currentPage, currentDocument]);
+    }, [currentPage, currentDocument, isPaused]);
 
     // Live duration calculation helper
-    const getSessionDuration = () => Date.now() - startTime;
+    const getSessionDuration = () => {
+        if (isPaused && pauseStartRef.current) {
+            return pauseStartRef.current - startTime;
+        }
+        return Date.now() - startTime;
+    };
+
+    const getCurrentPageDuration = () => {
+        if (isPaused && pauseStartRef.current) {
+            return pauseStartRef.current - lastPageParams.current.time;
+        }
+        return Date.now() - lastPageParams.current.time;
+    };
 
     // Calculate derived stats
     const totalPagesRead = new Set(history.map(h => h.page)).size;
@@ -75,12 +129,16 @@ export function useReadingStats() {
     return {
         isOpen,
         setIsOpen,
+        isPaused,
+        togglePause,
         stats: {
             startTime,
             totalDuration: getSessionDuration, // function to get live time
+            getCurrentPageDuration, // function to get live page time
             pagesRead: totalPagesRead,
             averageTimePerPage: avgTime,
-            history
+            history,
+            currentPage: lastPageParams.current.page
         }
     };
 }

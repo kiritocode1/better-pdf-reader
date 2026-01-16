@@ -20,28 +20,36 @@ interface ReadingTrackerProps {
     onClose: () => void;
     stats: ReadingSession;
     currentSessionFn: () => number;
+    isPaused: boolean;
+    onTogglePause: () => void;
 }
 
-export function ReadingTracker({ isOpen, onClose, stats, currentSessionFn }: ReadingTrackerProps) {
+export function ReadingTracker({ isOpen, onClose, stats, currentSessionFn, isPaused, onTogglePause }: ReadingTrackerProps) {
     const [elapsed, setElapsed] = useState(0);
-    const [isPaused, setIsPaused] = useState(false);
+    const [livePageDuration, setLivePageDuration] = useState(0);
     const controls = useDragControls();
 
-    // Update timer every second
+    // Update timer & live stats every 100ms
     useEffect(() => {
         if (!isOpen) return;
 
         // Immediate update
         setElapsed(currentSessionFn());
+        if (stats.getCurrentPageDuration) {
+            setLivePageDuration(stats.getCurrentPageDuration());
+        }
 
         const interval = setInterval(() => {
             if (!isPaused) {
                 setElapsed(currentSessionFn());
+                if (stats.getCurrentPageDuration) {
+                    setLivePageDuration(stats.getCurrentPageDuration());
+                }
             }
-        }, 100); // Higher frequency for smoother feel if needed, though 1s is fine for seconds
+        }, 100);
 
         return () => clearInterval(interval);
-    }, [isOpen, currentSessionFn, isPaused]);
+    }, [isOpen, currentSessionFn, isPaused, stats.getCurrentPageDuration]);
 
     // Format time: HH:MM:SS
     const formatTime = (ms: number) => {
@@ -83,13 +91,22 @@ export function ReadingTracker({ isOpen, onClose, stats, currentSessionFn }: Rea
         const barsCount = 30; // Number of bars to display
         const history = stats.history || [];
 
+        // Add live page to history for visualization
+        const activeHistory = [...history];
+        if (!isPaused && stats.currentPage) {
+            activeHistory.push({
+                page: stats.currentPage,
+                duration: Math.max(1000, livePageDuration) // Minimum 1s visual
+            });
+        }
+
         // If no history, show flat line
-        if (history.length === 0) {
+        if (activeHistory.length === 0) {
             return new Array(barsCount).fill({ height: 5, page: 0 }); // 5% height baseline
         }
 
         // Get last N pages
-        const recentPages = history.slice(-barsCount);
+        const recentPages = activeHistory.slice(-barsCount);
 
         // Find max duration for scaling (avoid div by zero)
         const maxDuration = Math.max(...recentPages.map(p => p.duration), 1000); // min 1s baseline
@@ -99,7 +116,7 @@ export function ReadingTracker({ isOpen, onClose, stats, currentSessionFn }: Rea
             const height = Math.max(5, (page.duration / maxDuration) * 100);
             return { height, page: page.page };
         });
-    }, [stats.history]);
+    }, [stats.history, livePageDuration, isPaused, stats.currentPage]);
 
     return (
         <AnimatePresence>
@@ -208,7 +225,7 @@ export function ReadingTracker({ isOpen, onClose, stats, currentSessionFn }: Rea
                         <div className="grid grid-cols-[1fr_1.2fr_1fr] gap-2 mt-2.5 h-[85px]">
                             {/* Record/Pause Button */}
                             <button
-                                onClick={() => setIsPaused(!isPaused)}
+                                onClick={onTogglePause}
                                 className="bg-[#E0E0E0] hover:bg-[#D6D6D6] rounded-[20px] flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_4px_rgba(0,0,0,0.05)] border-t border-white transition-all active:scale-[0.98] active:shadow-inner group/btn"
                             >
                                 <div className={cn(
