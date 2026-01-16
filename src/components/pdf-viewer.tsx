@@ -5,6 +5,7 @@ import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
 import * as pdfjsLib from "pdfjs-dist";
 import "@/styles/pdf_viewer.css";
 import { useTheme } from "better-themes";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
 
 export type PagesPerView = 1 | 2 | 4;
@@ -324,9 +325,11 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
             </div>
 
             {/* Scrollable PDF container */}
-            <div
-                ref={containerRef}
-                className="flex-1 overflow-auto scroll-smooth pt-16 pb-8"
+            <ScrollArea
+                viewportRef={containerRef}
+                className="flex-1"
+                type="scroll"
+                viewportClassName="pt-16 pb-8"
             >
                 <div className="flex flex-col items-center gap-6 px-4">
                     {allPages.map((pageNum) => (
@@ -396,7 +399,7 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
                         </div>
                     ))}
                 </div>
-            </div>
-        </div>
+            </ScrollArea>
+        </div >
     );
 }
