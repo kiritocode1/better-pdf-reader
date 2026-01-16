@@ -253,10 +253,25 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
 
     return (
         <div className="relative flex-1 flex flex-col overflow-hidden bg-muted/20">
-            {/* Progress bar - thin line at top */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-border z-20">
+            {/* Progress bar */}
+            <div
+                className="absolute top-0 left-0 right-0 h-1.5 z-50 cursor-pointer group"
+                onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const percentage = Math.max(0, Math.min(1, x / rect.width));
+                    const targetPage = Math.max(1, Math.ceil(percentage * pdf.numPages));
+                    if (onPageChange && targetPage !== visiblePage) {
+                        onPageChange(targetPage);
+                    }
+                }}
+            >
+                {/* Background track (visible on hover) */}
+                <div className="absolute inset-0 bg-transparent group-hover:bg-muted/50 transition-colors" />
+
+                {/* Fill */}
                 <div
-                    className="h-full bg-foreground transition-all duration-300 ease-out"
+                    className="absolute top-0 left-0 bottom-0 bg-red-600 transition-all duration-300 ease-out"
                     style={{ width: `${progressPercent}%` }}
                 />
             </div>
