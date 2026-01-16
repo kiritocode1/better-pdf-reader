@@ -133,11 +133,11 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         // Document commands
         ...(currentDocument ? [{
             id: "close-doc",
-            label: "Close Document",
-            description: `Close ${currentDocument.name}`,
+            label: "Go back to Library",
+            description: "Close current document",
             icon: Cancel01Icon,
             action: () => closeDocument(),
-            keywords: ["close", "document", "exit"],
+            keywords: ["close", "document", "exit", "library", "back", "home"],
             shortcut: "⌘W",
         }] : []),
     ];

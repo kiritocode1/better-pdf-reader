@@ -93,7 +93,18 @@ export function ReaderView({ onMenuClick }: ReaderViewProps) {
             {/* Header - Editorial style */}
             <header className="shrink-0 h-14 border-b border-border bg-background flex items-center justify-between px-4 gap-4">
                 {/* Left: Menu & Title */}
-                <div className="flex items-center gap-4 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                    {/* Back to library (Close Document) */}
+                    <button
+                        onClick={closeDocument}
+                        className="w-8 h-8 flex items-center justify-center hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                        title="Go back to library"
+                    >
+                        <HugeiconsIcon icon={ArrowLeft01Icon} size={18} strokeWidth={1.5} />
+                    </button>
+
+                    <div className="w-px h-4 bg-border mx-1" />
+
                     <button
                         onClick={onMenuClick}
                         className="lg:hidden w-8 h-8 flex items-center justify-center hover:bg-secondary transition-colors"

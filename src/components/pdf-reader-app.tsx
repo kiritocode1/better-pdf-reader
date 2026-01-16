@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PdfProvider } from "@/components/providers/pdf-provider";
+import { PdfProvider, usePdf } from "@/components/providers/pdf-provider";
 import { LibrarySidebar } from "@/components/library-sidebar";
 import { ReaderView } from "@/components/reader-view";
 import { CommandPalette, useCommandPalette } from "@/components/command-palette";
@@ -24,9 +24,17 @@ function useMediaQuery(query: string) {
 }
 
 function PdfReaderAppContent() {
+    const { currentDocument } = usePdf(); // Need to change import slightly or just verify how it's done below
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const commandPalette = useCommandPalette();
     const isDesktop = useMediaQuery("(min-width: 1024px)");
+
+    // Automatically open sidebar when no document is selected
+    useEffect(() => {
+        if (!currentDocument) {
+            setSidebarOpen(true);
+        }
+    }, [currentDocument]);
 
     // Handle initial state sync with screen size if needed, 
     // but sidebarOpen=true by default is fine.
