@@ -18,6 +18,7 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
     const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
     const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
     const renderTasksRef = useRef<Map<number, RenderTask>>(new Map());
+    const renderingPagesRef = useRef<Set<number>>(new Set()); // Track pages currently being rendered
     const observerRef = useRef<IntersectionObserver | null>(null);
     const [scale, setScale] = useState(1.5);
     const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set());
@@ -30,7 +31,7 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
     // Generate all page numbers
     const allPages = Array.from({ length: pdf.numPages }, (_, i) => i + 1);
 
-    // Render a single page
+    // Render a single page with proper locking
     const renderPage = useCallback(async (pageNum: number) => {
         const canvas = canvasRefs.current.get(pageNum);
         if (!canvas) return;
@@ -38,20 +39,32 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
         // Skip if already rendered at current scale
         if (renderedPages.has(pageNum)) return;
 
+        // Skip if already rendering this page (prevents concurrent render on same canvas)
+        if (renderingPagesRef.current.has(pageNum)) return;
+
+        // Cancel any existing task for this page
         const existingTask = renderTasksRef.current.get(pageNum);
         if (existingTask) {
             try {
                 existingTask.cancel();
+                // Wait a tick for cancellation to process
+                await new Promise(resolve => setTimeout(resolve, 10));
             } catch {
-                // Ignore
+                // Ignore cancellation errors
             }
             renderTasksRef.current.delete(pageNum);
         }
 
+        // Mark as rendering
+        renderingPagesRef.current.add(pageNum);
+
         try {
             const page = await pdf.getPage(pageNum);
             const context = canvas.getContext("2d");
-            if (!context) return;
+            if (!context) {
+                renderingPagesRef.current.delete(pageNum);
+                return;
+            }
 
             const viewport = page.getViewport({ scale });
 
@@ -71,10 +84,18 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
 
             setRenderedPages(prev => new Set(prev).add(pageNum));
         } catch (e) {
-            if (e instanceof Error && e.message.includes("Rendering cancelled")) {
-                return;
+            // Handle expected errors gracefully
+            if (e instanceof Error) {
+                const msg = e.message.toLowerCase();
+                // Ignore cancellation and concurrent render errors
+                if (msg.includes("cancelled") || msg.includes("multiple render")) {
+                    return;
+                }
             }
             console.error(`Failed to render page ${pageNum}:`, e);
+        } finally {
+            // Always release the lock
+            renderingPagesRef.current.delete(pageNum);
         }
     }, [pdf, scale, renderedPages]);
 
