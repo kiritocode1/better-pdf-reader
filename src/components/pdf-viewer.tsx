@@ -61,6 +61,7 @@ export function PdfViewer({ pdf, currentPage, onPageChange }: PdfViewerProps) {
                 const renderTask = page.render({
                     canvasContext: context,
                     viewport,
+                    canvas
                 });
 
                 renderTaskRef.current = renderTask;
