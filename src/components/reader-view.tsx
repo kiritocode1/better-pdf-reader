@@ -142,124 +142,219 @@ export function ReaderView({ onMenuClick, onShowStats, currentStats, dashboard }
             const hours = Math.floor(totalMinutes / 60);
             const minutes = totalMinutes % 60;
             if (hours > 0) return `${hours}h ${minutes}m`;
-            return `${minutes}m`;
+            if (minutes > 0) return `${minutes}m`;
+            return "0m";
         };
 
+        const totalTime = dashboard?.totalLifetimeReadingMs ?? 0;
+        const totalPages = dashboard?.totalLifetimePagesRead ?? 0;
+        const totalSessions = dashboard?.totalLifetimeSessions ?? 0;
+        const streak = dashboard?.currentStreak ?? 0;
+        const hasData = weeklyData.some(v => v > 0);
+        const peakMinutes = Math.max(...weeklyData);
+
         return (
-            <div className="flex-1 flex flex-col bg-background relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(currentColor_1px,transparent_1px)] [background-size:20px_20px] opacity-[0.03] pointer-events-none" />
+            <div className="flex-1 flex flex-col bg-black text-white relative overflow-hidden">
+                {/* Vertical Grid Lines Background */}
+                <div className="absolute inset-0 pointer-events-none">
+                    {[...Array(12)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="absolute top-0 bottom-0 w-px bg-white/[0.04]"
+                            style={{ left: `${((i + 1) / 13) * 100}%` }}
+                        />
+                    ))}
+                </div>
 
-                <div className="flex-1 flex flex-col items-center justify-center z-10 p-8">
+                {/* Radial Clock Decoration */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-[0.03]">
+                    <svg width="800" height="800" viewBox="0 0 800 800">
+                        <circle cx="400" cy="400" r="350" fill="none" stroke="white" strokeWidth="1" />
+                        <circle cx="400" cy="400" r="300" fill="none" stroke="white" strokeWidth="0.5" />
+                        {[...Array(60)].map((_, i) => {
+                            const angle = (i * 6 - 90) * (Math.PI / 180);
+                            const isMajor = i % 5 === 0;
+                            const innerR = isMajor ? 320 : 340;
+                            const outerR = 350;
+                            return (
+                                <line
+                                    key={i}
+                                    x1={400 + innerR * Math.cos(angle)}
+                                    y1={400 + innerR * Math.sin(angle)}
+                                    x2={400 + outerR * Math.cos(angle)}
+                                    y2={400 + outerR * Math.sin(angle)}
+                                    stroke="white"
+                                    strokeWidth={isMajor ? "2" : "0.5"}
+                                />
+                            );
+                        })}
+                    </svg>
+                </div>
+
+                {/* Main Content */}
+                <div className="flex-1 flex flex-col z-10">
                     {/* Header */}
-                    <div className="text-center mb-12">
-                        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-red-500">
-                            System_Idle
-                        </span>
-                        <h2 className="text-3xl font-bold text-foreground tracking-tight uppercase mt-2">
-                            Intelligence_Hub
-                        </h2>
-                        <p className="text-xs text-muted-foreground font-mono tracking-wide max-w-[320px] mx-auto mt-2">
-                            SELECT A FILE FROM THE LIBRARY TO BEGIN READING
-                        </p>
-                    </div>
-
-                    {/* Stats Dashboard - Lifetime Stats */}
-                    <div className="w-full max-w-2xl space-y-6">
-                        {/* Lifetime Stats Row */}
-                        <div className="grid grid-cols-4 gap-4">
-                            {/* Total Reading Time */}
-                            <div className="p-5 border border-border bg-secondary/20 rounded-sm group hover:border-red-500/50 transition-all">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-8 h-8 border border-border rounded-full flex items-center justify-center group-hover:border-red-500 group-hover:text-red-500 transition-colors">
-                                        <HugeiconsIcon icon={Clock01Icon} size={16} />
-                                    </div>
-                                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-mono">Total Time</span>
-                                </div>
-                                <div className="text-xl font-mono font-bold text-foreground tracking-tight">
-                                    {formatLifetimeTime(dashboard?.totalLifetimeReadingMs ?? 0)}
-                                </div>
-                            </div>
-
-                            {/* Total Pages Read */}
-                            <div className="p-5 border border-border bg-secondary/20 rounded-sm group hover:border-red-500/50 transition-all">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-8 h-8 border border-border rounded-full flex items-center justify-center group-hover:border-red-500 group-hover:text-red-500 transition-colors">
-                                        <HugeiconsIcon icon={BookOpen01Icon} size={16} />
-                                    </div>
-                                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-mono">Pages</span>
-                                </div>
-                                <div className="text-xl font-mono font-bold text-foreground tracking-tight">
-                                    {dashboard?.totalLifetimePagesRead ?? 0}
-                                </div>
-                            </div>
-
-                            {/* Total Sessions */}
-                            <div className="p-5 border border-border bg-secondary/20 rounded-sm group hover:border-red-500/50 transition-all">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-8 h-8 border border-border rounded-full flex items-center justify-center group-hover:border-red-500 group-hover:text-red-500 transition-colors">
-                                        <HugeiconsIcon icon={FlashIcon} size={16} />
-                                    </div>
-                                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-mono">Sessions</span>
-                                </div>
-                                <div className="text-xl font-mono font-bold text-foreground tracking-tight">
-                                    {dashboard?.totalLifetimeSessions ?? 0}
-                                </div>
-                            </div>
-
-                            {/* Current Streak */}
-                            <div className="p-5 border border-border bg-secondary/20 rounded-sm group hover:border-red-500/50 transition-all">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-8 h-8 border border-border rounded-full flex items-center justify-center group-hover:border-red-500 group-hover:text-red-500 transition-colors">
-                                        <HugeiconsIcon icon={ChartHistogramIcon} size={16} />
-                                    </div>
-                                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-mono">Streak</span>
-                                </div>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-xl font-mono font-bold text-foreground tracking-tight">
-                                        {dashboard?.currentStreak ?? 0}
-                                    </span>
-                                    <span className="text-[9px] text-muted-foreground uppercase">days</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Weekly Activity Chart */}
-                        <div className="p-6 border border-border bg-secondary/10 rounded-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-[0.15em] font-mono font-bold">Weekly_Activity</span>
-                                <span className="text-[9px] text-muted-foreground font-mono">MINUTES READ</span>
-                            </div>
-                            <div className="h-24 flex items-end gap-3">
-                                {weeklyData.map((val, i) => (
-                                    <div key={i} className="flex-1 flex flex-col justify-end gap-1 group">
-                                        <div
-                                            className="w-full bg-foreground/20 group-hover:bg-red-500 transition-colors relative min-h-[4px] rounded-t-sm"
-                                            style={{ height: `${(val / maxVal) * 100}%` }}
-                                        >
-                                            <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-[9px] font-mono bg-foreground text-background px-1.5 py-0.5 rounded transform transition-all">
-                                                {val}m
-                                            </div>
-                                        </div>
-                                        <span className="text-[9px] text-center text-muted-foreground font-mono uppercase">
-                                            {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
-                                        </span>
-                                    </div>
+                    <header className="shrink-0 flex items-center justify-between px-8 py-6">
+                        <div className="flex items-center gap-4">
+                            {/* Barcode decoration */}
+                            <div className="flex gap-[2px] h-8">
+                                {[3, 1, 2, 1, 3, 2, 1, 2, 3, 1, 2, 1].map((w, i) => (
+                                    <div key={i} className="bg-white h-full" style={{ width: `${w * 2}px` }} />
                                 ))}
                             </div>
                         </div>
+                        <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.2em] text-white/40">
+                            <span>Better PDF Reader</span>
+                            <span className="text-white/20">—</span>
+                            <span>v1.0</span>
+                        </div>
+                    </header>
 
-                        {/* Quick Actions */}
-                        <div className="flex items-center justify-center gap-4 pt-4">
-                            <button
-                                onClick={onShowStats}
-                                className="flex items-center gap-2 px-4 py-2 border border-border hover:border-red-500 hover:text-red-500 hover:bg-red-500/10 transition-all text-xs font-mono uppercase tracking-wide text-muted-foreground"
-                            >
-                                <HugeiconsIcon icon={ChartHistogramIcon} size={14} />
-                                <span>View Full Stats</span>
-                            </button>
+                    {/* Hero Section */}
+                    <div className="flex-1 flex items-center px-8">
+                        <div className="w-full max-w-6xl mx-auto">
+                            {/* Main Title */}
+                            <div className="mb-16">
+                                <h1 className="text-[clamp(3rem,12vw,8rem)] font-bold leading-[0.85] tracking-tighter">
+                                    The Reading<br />
+                                    <span className="text-white/40">Intelligence</span> Hub™
+                                </h1>
+                            </div>
+
+                            {/* Stats + Info Grid */}
+                            <div className="grid grid-cols-12 gap-8">
+                                {/* Left Info */}
+                                <div className="col-span-3">
+                                    <div className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-4">
+                                        [About]
+                                    </div>
+                                    <p className="text-sm text-white/60 leading-relaxed max-w-xs">
+                                        A minimal, focused reading environment with intelligent analytics.
+                                        Track your reading patterns. Export as markdown. No distractions.
+                                    </p>
+
+                                    {/* Action hint */}
+                                    <div className="mt-8 flex items-center gap-3">
+                                        <div className="w-8 h-px bg-red-500" />
+                                        <span className="text-[10px] uppercase tracking-[0.2em] text-white/60">
+                                            Select a document to begin
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Stats Grid */}
+                                <div className="col-span-5 col-start-5">
+                                    <div className="grid grid-cols-2 gap-x-12 gap-y-8">
+                                        <div>
+                                            <div className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-2">
+                                                Total Time
+                                            </div>
+                                            <div className="text-4xl font-bold tracking-tighter">
+                                                {formatLifetimeTime(totalTime)}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-2">
+                                                Pages Read
+                                            </div>
+                                            <div className="text-4xl font-bold tracking-tighter">
+                                                {totalPages}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-2">
+                                                Sessions
+                                            </div>
+                                            <div className="text-4xl font-bold tracking-tighter">
+                                                {totalSessions}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-2">
+                                                Current Streak
+                                            </div>
+                                            <div className="text-4xl font-bold tracking-tighter">
+                                                {streak}<span className="text-lg font-normal text-white/40 ml-1">days</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Weekly Chart */}
+                                <div className="col-span-4 col-start-9">
+                                    <div className="text-[10px] uppercase tracking-[0.15em] text-white/40 mb-4">
+                                        [Weekly Activity]
+                                    </div>
+
+                                    {/* Chart */}
+                                    <div className="h-32 flex items-end gap-2">
+                                        {weeklyData.map((val, i) => {
+                                            const height = hasData ? (val / Math.max(peakMinutes, 1)) * 100 : 0;
+                                            const isToday = i === new Date().getDay() - 1 || (new Date().getDay() === 0 && i === 6);
+                                            return (
+                                                <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                                                    <div
+                                                        className={`w-full transition-all ${isToday ? 'bg-red-500' : 'bg-white/20'}`}
+                                                        style={{ height: `${Math.max(height, 4)}%` }}
+                                                    />
+                                                    <span className={`text-[9px] uppercase ${isToday ? 'text-red-500' : 'text-white/30'}`}>
+                                                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Peak info */}
+                                    {hasData && (
+                                        <div className="mt-4 text-xs text-white/40">
+                                            Peak: <span className="text-white">{peakMinutes}m</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Footer */}
+                    <footer className="shrink-0 px-8 py-6 flex items-end justify-between">
+                        <div className="flex items-center gap-8">
+                            <div className="text-[10px] uppercase tracking-[0.15em] text-white/30">
+                                Project by
+                            </div>
+                            <a
+                                href="https://aryank.space"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-bold tracking-tight hover:text-red-500 transition-colors"
+                            >
+                                BLANK
+                            </a>
+                        </div>
+
+                        <div className="flex items-center gap-12">
+                            <button
+                                onClick={onShowStats}
+                                className="group flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-white/40 hover:text-white transition-colors"
+                            >
+                                <span>View Full Analytics</span>
+                                <HugeiconsIcon icon={ArrowRight01Icon} size={12} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+
+                            <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.15em] text-white/30">
+                                <span>Local Storage</span>
+                                <span>•</span>
+                                <span>Privacy First</span>
+                            </div>
+                        </div>
+                    </footer>
                 </div>
+
+                {/* Corner Accents */}
+                <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-white/10" />
+                <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-white/10" />
+                <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-white/10" />
+                <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-white/10" />
             </div>
         );
     }
