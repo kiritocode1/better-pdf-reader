@@ -25,6 +25,10 @@ import {
     Clock01Icon,
     BookOpen01Icon,
     FlashIcon,
+    NewTwitterIcon,
+    Linkedin02Icon,
+    Github01Icon,
+    Share01Icon,
 } from "@hugeicons/core-free-icons";
 import {
     DropdownMenu,
@@ -223,37 +227,88 @@ export function ReaderView({ onMenuClick, onShowStats, currentStats, dashboard }
                         </div>
                     </header>
 
-                    {/* Compact Grid Layout */}
-                    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4 p-4">
-                        {/* Intro Card */}
-                        <div className="col-span-2 md:col-span-3 lg:col-span-2 bg-background border border-border p-2 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors">
-                            <h1 className="text-2xl font-bold tracking-tighter mb-2">Better PDF Reader</h1>
-                            <p className="text-sm text-muted-foreground">Minimal reading with analytics. No distractions.</p>
+                    {/* Expanded Grid Layout */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 p-4 max-w-[1600px] mx-auto w-full">
+                        {/* Intro Card - Larger */}
+                        <div className="col-span-2 md:col-span-2 lg:col-span-2 row-span-2 bg-background border border-border p-6 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors flex flex-col justify-between group">
+                            <div>
+                                <h1 className="text-3xl font-bold tracking-tighter mb-4">Better PDF<br />Reader</h1>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    Minimal reading environment.<br />
+                                    Intelligent analytics.<br />
+                                    No distractions.
+                                </p>
+                            </div>
+                            <div className="flex gap-4">
+                                <a
+                                    href="https://github.com/kiritocode1/better-pdf-reader"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 bg-foreground/5 hover:bg-foreground/10 transition-colors rounded-full"
+                                    title="View on GitHub"
+                                >
+                                    <HugeiconsIcon icon={Github01Icon} size={20} />
+                                </a>
+                                <button
+                                    onClick={() => {
+                                        const text = "Check out Better PDF Reader by @kiritocode1";
+                                        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+                                    }}
+                                    className="p-2 bg-foreground/5 hover:bg-foreground/10 transition-colors rounded-full"
+                                    title="Share on X"
+                                >
+                                    <HugeiconsIcon icon={NewTwitterIcon} size={20} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank');
+                                    }}
+                                    className="p-2 bg-foreground/5 hover:bg-foreground/10 transition-colors rounded-full"
+                                    title="Share on LinkedIn"
+                                >
+                                    <HugeiconsIcon icon={Linkedin02Icon} size={20} />
+                                </button>
+                            </div>
                         </div>
-                        {/* Total Time */}
-                        <div className="bg-background border border-border p-2 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors">
-                            <div className="text-xs uppercase text-muted-foreground mb-1">Total Time</div>
-                            <div className="text-lg font-bold">{formatLifetimeTime(totalTime)}</div>
+                        {/* Total Time - Taller */}
+                        <div className="col-span-1 md:col-span-1 lg:col-span-1 row-span-1 bg-background border border-border p-4 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors flex flex-col justify-between">
+                            <div className="text-xs uppercase text-muted-foreground tracking-wider mb-1">Total Time</div>
+                            <div className="text-2xl font-bold tracking-tight">{formatLifetimeTime(totalTime)}</div>
                         </div>
-                        {/* Pages Read */}
-                        <div className="bg-background border border-border p-2 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors">
-                            <div className="text-xs uppercase text-muted-foreground mb-1">Pages</div>
-                            <div className="text-lg font-bold">{totalPages}</div>
+                        {/* Pages Read - Taller */}
+                        <div className="col-span-1 md:col-span-1 lg:col-span-1 row-span-1 bg-background border border-border p-4 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors flex flex-col justify-between">
+                            <div className="text-xs uppercase text-muted-foreground tracking-wider mb-1">Pages</div>
+                            <div className="text-2xl font-bold tracking-tight">{totalPages}</div>
                         </div>
                         {/* Sessions */}
-                        <div className="bg-background border border-border p-2 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors">
-                            <div className="text-xs uppercase text-muted-foreground mb-1">Sessions</div>
-                            <div className="text-lg font-bold">{totalSessions}</div>
+                        <div className="col-span-1 md:col-span-1 lg:col-span-1 row-span-1 bg-background border border-border p-4 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors flex flex-col justify-between">
+                            <div className="text-xs uppercase text-muted-foreground tracking-wider mb-1">Sessions</div>
+                            <div className="text-2xl font-bold tracking-tight">{totalSessions}</div>
                         </div>
                         {/* Streak */}
-                        <div className="bg-background border border-border p-2 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors">
-                            <div className="text-xs uppercase text-muted-foreground mb-1">Streak</div>
-                            <div className="text-lg font-bold">{streak}<span className="text-sm font-normal text-muted-foreground ml-1">d</span></div>
+                        <div className="col-span-1 md:col-span-1 lg:col-span-1 row-span-1 bg-background border border-border p-4 hover:bg-foreground/5 dark:hover:bg-white/10 transition-colors flex flex-col justify-between">
+                            <div className="text-xs uppercase text-muted-foreground tracking-wider mb-1">Streak</div>
+                            <div className="text-2xl font-bold tracking-tight">{streak}<span className="text-sm font-normal text-muted-foreground ml-1">days</span></div>
                         </div>
-                        {/* Weekly Activity Chart */}
-                        <div className="col-span-2 md:col-span-3 lg:col-span-2 bg-background border border-border p-3 hover:bg-foreground/5 dark:hover:bg-white/5 transition-colors">
-                            <div className="text-xs uppercase text-muted-foreground mb-3 tracking-wider">Weekly Activity</div>
-                            <WeeklyBarChart data={weeklyData} />
+                        {/* Weekly Activity Chart - Wider */}
+                        <div className="col-span-2 md:col-span-2 lg:col-span-2 row-span-2 bg-background border border-border p-4 hover:bg-foreground/5 dark:hover:bg-white/5 transition-colors flex flex-col">
+                            <div className="text-xs uppercase text-muted-foreground mb-4 tracking-wider">Weekly Activity</div>
+                            <div className="flex-1 flex items-end">
+                                <WeeklyBarChart data={weeklyData} className="w-full" />
+                            </div>
+                        </div>
+
+                        {/* Poetic Image Card - Large */}
+                        <div className="col-span-2 md:col-span-4 lg:col-span-4 row-span-2 bg-background border border-border p-0 overflow-hidden relative group">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src="/pixelated.png"
+                                alt="Poetic visuals"
+                                className="w-full h-full object-cover grayscale opacity-60 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-700"
+                            />
+                            <div className="absolute bottom-4 left-4 text-xs uppercase tracking-[0.2em] text-white/60 mix-blend-difference">
+                                The Poetics of Space
+                            </div>
                         </div>
                     </div>
 
