@@ -330,6 +330,14 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
                 className="flex-1"
                 type="scroll"
                 viewportClassName="pt-16 pb-8"
+                scrollIndicator={
+                    <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 flex items-center justify-end min-w-[3rem]">
+                        <div className="bg-red-600 text-white text-[10px] font-mono font-bold px-2 py-1 rounded shadow-sm whitespace-nowrap transition-all">
+                            PG {visiblePage} <span className="opacity-50">/ {pdf.numPages}</span>
+                        </div>
+                        <div className="w-1 h-0.5 bg-red-600 ml-0.5 opacity-50"></div>
+                    </div>
+                }
             >
                 <div className="flex flex-col items-center gap-6 px-4">
                     {allPages.map((pageNum) => (

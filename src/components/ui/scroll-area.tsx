@@ -18,11 +18,13 @@ type Mask = {
 export type ScrollAreaContextProps = {
   isTouch: boolean;
   type: "auto" | "always" | "scroll" | "hover";
+  scrollIndicator?: React.ReactNode;
 };
 
 const ScrollAreaContext = React.createContext<ScrollAreaContextProps>({
   isTouch: false,
   type: "hover",
+  scrollIndicator: null,
 });
 
 const ScrollArea = React.forwardRef<
@@ -38,8 +40,9 @@ const ScrollArea = React.forwardRef<
     maskHeight?: number;
     maskClassName?: string;
     viewportRef?: React.Ref<HTMLDivElement>;
+    scrollIndicator?: React.ReactNode;
   }
->(({ className, children, type = "hover", maskHeight = 30, maskClassName, viewportClassName, viewportRef: externalViewportRef, ...props }, ref) => {
+>(({ className, children, type = "hover", maskHeight = 30, maskClassName, viewportClassName, viewportRef: externalViewportRef, scrollIndicator, ...props }, ref) => {
   const [showMask, setShowMask] = React.useState<Mask>({
     top: false,
     bottom: false,
@@ -90,7 +93,7 @@ const ScrollArea = React.forwardRef<
   }, [checkScrollability, isTouch]);
 
   return (
-    <ScrollAreaContext.Provider value={{ isTouch, type }}>
+    <ScrollAreaContext.Provider value={{ isTouch, type, scrollIndicator }}>
       {isTouch ? (
         <div
           ref={ref}
@@ -134,7 +137,7 @@ const ScrollBar = React.forwardRef<
   React.ComponentRef<typeof ScrollAreaPrimitive.Scrollbar>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Scrollbar>
 >(({ className, orientation = "vertical", ...props }, ref) => {
-  const { isTouch, type } = React.useContext(ScrollAreaContext);
+  const { isTouch, type, scrollIndicator } = React.useContext(ScrollAreaContext);
 
   if (isTouch) return null;
 
@@ -160,7 +163,9 @@ const ScrollBar = React.forwardRef<
           orientation === "vertical" && "my-1 active:scale-y-95",
           orientation === "horizontal" && "active:scale-x-98"
         )}
-      />
+      >
+        {scrollIndicator}
+      </ScrollAreaPrimitive.Thumb>
     </ScrollAreaPrimitive.Scrollbar>
   );
 });
