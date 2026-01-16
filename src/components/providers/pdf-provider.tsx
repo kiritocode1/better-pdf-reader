@@ -219,19 +219,26 @@ export function PdfProvider({ children }: { children: ReactNode }) {
         if (!state.currentDocument || !state.currentPdf) return;
         if (page < 1 || page > state.totalPages) return;
 
+        const previousPage = state.currentPage;
+
+        // Optimistic update
+        setState((s) => ({ ...s, currentPage: page }));
+
         try {
             await runEffect(
                 Effect.gen(function* () {
                     const storage = yield* DocumentStorage;
+                    // Note: accessing state.currentDocument.id inside the effect might be safer if passed in
+                    // But here we use the closure variable which should be fine as long as the effect runs immediately
                     yield* storage.updateLastOpened(state.currentDocument!.id, page);
                 })
             );
-
-            setState((s) => ({ ...s, currentPage: page }));
         } catch (e) {
             console.error("Failed to update page:", e);
+            // Rollback on error
+            setState((s) => ({ ...s, currentPage: previousPage }));
         }
-    }, [state.currentDocument, state.currentPdf, state.totalPages]);
+    }, [state.currentDocument, state.currentPdf, state.totalPages, state.currentPage]);
 
     const nextPage = useCallback(async () => {
         await goToPage(state.currentPage + 1);

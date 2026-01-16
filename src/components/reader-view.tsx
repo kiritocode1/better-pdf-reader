@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePdf } from "@/components/providers/pdf-provider";
 import { PdfViewer } from "@/components/pdf-viewer";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,7 +12,6 @@ import {
     FileScriptIcon,
     Menu01Icon,
     CheckmarkCircle02Icon,
-    Brain01Icon,
     GridViewIcon,
     CommandIcon,
     MoreVerticalIcon,
@@ -51,6 +50,32 @@ export function ReaderView({ onMenuClick, onShowStats }: ReaderViewProps) {
     } = usePdf();
 
     const [copyState, setCopyState] = useState<"idle" | "copying" | "copied">("idle");
+    const [pageInputValue, setPageInputValue] = useState(String(currentPage));
+
+
+    // Use focus state to prevent overwriting input while user is typing
+    const [isInputFocused, setIsInputFocused] = useState(false);
+
+    // Sync input value when page changes externally, ONLY if not focused
+    useEffect(() => {
+        if (!isInputFocused) {
+            setPageInputValue(String(currentPage));
+        }
+    }, [currentPage, isInputFocused]);
+
+    const handlePageSubmit = () => {
+        const val = parseInt(pageInputValue);
+        if (!isNaN(val) && val >= 1 && val <= totalPages) {
+            goToPage(val);
+        } else {
+            // Revert to current page if invalid
+            setPageInputValue(String(currentPage));
+        }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPageInputValue(e.target.value);
+    };
 
     const handleCopy = async (type: "page" | "document") => {
         setCopyState("copying");
@@ -140,15 +165,23 @@ export function ReaderView({ onMenuClick, onShowStats }: ReaderViewProps) {
 
                     <div className="flex items-center gap-1.5 px-2">
                         <input
-                            type="number"
-                            min={1}
-                            max={totalPages}
-                            value={currentPage}
-                            onChange={(e) => {
-                                const val = parseInt(e.target.value);
-                                if (!isNaN(val)) goToPage(val);
+                            type="text"
+                            inputMode="numeric"
+                            value={pageInputValue}
+                            onChange={handleInputChange}
+                            onFocus={() => setIsInputFocused(true)}
+                            onBlur={() => {
+                                setIsInputFocused(false);
+                                handlePageSubmit();
                             }}
-                            className="w-10 h-6 text-center text-xs font-mono bg-secondary border-0 focus:outline-none focus:ring-1 focus:ring-ring"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    handlePageSubmit();
+                                    // optional: select all text to make typing next number easier? 
+                                    // e.currentTarget.select(); 
+                                }
+                            }}
+                            className="w-10 h-6 text-center text-xs font-mono bg-secondary border-0 focus:outline-none focus:ring-1 focus:ring-ring rounded-sm"
                         />
                         <span className="text-xs text-muted-foreground font-mono">/</span>
                         <span className="text-xs text-muted-foreground font-mono">{totalPages}</span>

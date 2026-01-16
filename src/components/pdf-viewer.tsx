@@ -23,6 +23,7 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
     const [scale, setScale] = useState(1.5);
     const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set());
     const [visiblePage, setVisiblePage] = useState(currentPage);
+    const [estimatedPageHeight, setEstimatedPageHeight] = useState(800 * 1.5);
     const isScrollingRef = useRef(false);
     const { theme } = useTheme();
 
@@ -99,10 +100,18 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
         }
     }, [pdf, scale, renderedPages]);
 
-    // Clear rendered pages when scale changes
+    // Clear rendered pages when scale changes, and update estimated height
     useEffect(() => {
         setRenderedPages(new Set());
-    }, [scale]);
+
+        // Update estimate based on scale
+        pdf.getPage(1).then(page => {
+            const viewport = page.getViewport({ scale });
+            setEstimatedPageHeight(viewport.height);
+        }).catch(err => {
+            console.error("Failed to estimate page height:", err);
+        });
+    }, [scale, pdf]);
 
     // Set up intersection observer for lazy loading
     useEffect(() => {
@@ -157,18 +166,29 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
     }, [visiblePage, currentPage, onPageChange]);
 
     // Scroll to page when currentPage changes externally
+    // Scroll to page when currentPage changes externally
     useEffect(() => {
-        if (currentPage !== visiblePage) {
-            const pageElement = pageRefs.current.get(currentPage);
-            if (pageElement && containerRef.current) {
-                isScrollingRef.current = true;
-                pageElement.scrollIntoView({ behavior: "smooth", block: "start" });
-                setTimeout(() => {
-                    isScrollingRef.current = false;
+        const scrollToPage = async () => {
+            if (currentPage !== visiblePage) {
+                const pageElement = pageRefs.current.get(currentPage);
+                if (pageElement && containerRef.current) {
+                    isScrollingRef.current = true;
+
+                    // "auto" = instant jump
+                    pageElement.scrollIntoView({ behavior: "auto", block: "start" });
+
+                    // 3. Force update our local state to match immediately
                     setVisiblePage(currentPage);
-                }, 500);
+
+                    // 4. Keep lock active briefly to let any layout shifts settle 
+                    setTimeout(() => {
+                        isScrollingRef.current = false;
+                    }, 500);
+                }
             }
-        }
+        };
+
+        scrollToPage();
     }, [currentPage]);
 
     // Keyboard navigation
@@ -255,7 +275,8 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
                             `}
                             style={{
                                 background: isDark ? "#141414" : "#ffffff",
-                                minHeight: "200px",
+                                minHeight: renderedPages.has(pageNum) ? "auto" : `${estimatedPageHeight}px`,
+                                height: renderedPages.has(pageNum) ? "auto" : `${estimatedPageHeight}px`,
                             }}
                         >
                             {/* Page number */}
