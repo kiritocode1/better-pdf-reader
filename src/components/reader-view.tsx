@@ -57,6 +57,24 @@ export function ReaderView({ onMenuClick, onShowStats, currentStats, dashboard }
     const weeklyData = dashboard?.weeklyData ?? [0, 0, 0, 0, 0, 0, 0];
     const maxVal = Math.max(...weeklyData, 1); // Avoid division by zero
 
+    const [todayIdx, setTodayIdx] = useState<number>(-1);
+    useEffect(() => {
+        // Compute today index (0 = Monday, 6 = Sunday) on client only
+        const day = new Date().getDay();
+        const idx = day === 0 ? 6 : day - 1;
+        setTodayIdx(idx);
+    }, []);
+
+    // Format lifetime reading time
+    const formatLifetimeTime = (ms: number) => {
+        const totalMinutes = Math.floor(ms / 60000);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        if (minutes > 0) return `${minutes}m`;
+        return "0m";
+    };
+
     // Update elapsed time for stats display
     useEffect(() => {
         if (!currentStats) return;
@@ -141,24 +159,7 @@ export function ReaderView({ onMenuClick, onShowStats, currentStats, dashboard }
     };
 
     if (!currentPdf || !currentDocument) {
-        // Format lifetime reading time
-        const formatLifetimeTime = (ms: number) => {
-            const totalMinutes = Math.floor(ms / 60000);
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            if (hours > 0) return `${hours}h ${minutes}m`;
-            if (minutes > 0) return `${minutes}m`;
-            return "0m";
-        };
-
         const totalTime = dashboard?.totalLifetimeReadingMs ?? 0;
-        const [todayIdx, setTodayIdx] = useState<number>(-1);
-        useEffect(() => {
-            // Compute today index (0 = Monday, 6 = Sunday) on client only
-            const day = new Date().getDay();
-            const idx = day === 0 ? 6 : day - 1;
-            setTodayIdx(idx);
-        }, []);
         const totalPages = dashboard?.totalLifetimePagesRead ?? 0;
         const totalSessions = dashboard?.totalLifetimeSessions ?? 0;
         const streak = dashboard?.currentStreak ?? 0;
