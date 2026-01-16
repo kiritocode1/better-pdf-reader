@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
+import * as pdfjsLib from "pdfjs-dist";
+import "@/styles/pdf_viewer.css";
 import { useTheme } from "better-themes";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -18,6 +20,7 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
     const containerRef = useRef<HTMLDivElement>(null);
     const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
     const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
+    const textLayerRefs = useRef<Map<number, HTMLDivElement>>(new Map());
     const renderTasksRef = useRef<Map<number, RenderTask>>(new Map());
     const renderingPagesRef = useRef<Set<number>>(new Set()); // Track pages currently being rendered
     const observerRef = useRef<IntersectionObserver | null>(null);
@@ -85,6 +88,23 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
             renderTasksRef.current.set(pageNum, renderTask);
             await renderTask.promise;
             renderTasksRef.current.delete(pageNum);
+
+            // Text Layer
+            const textLayerDiv = textLayerRefs.current.get(pageNum);
+            if (textLayerDiv) {
+                textLayerDiv.innerHTML = "";
+                textLayerDiv.style.setProperty("--total-scale-factor", `${scale}`);
+                textLayerDiv.style.width = `${viewport.width}px`;
+                textLayerDiv.style.height = `${viewport.height}px`;
+
+                const textContent = await page.getTextContent();
+                const textLayer = new (pdfjsLib as any).TextLayer({
+                    textContentSource: textContent,
+                    container: textLayerDiv,
+                    viewport: viewport,
+                });
+                await textLayer.render();
+            }
 
             setRenderedPages(prev => new Set(prev).add(pageNum));
         } catch (e) {
@@ -347,6 +367,18 @@ export function PdfViewer({ pdf, currentPage, pagesPerView = 1, onPageChange }: 
                                     }
                                 }}
                                 className="block"
+                            />
+
+                            {/* Text Layer */}
+                            <div
+                                ref={(el) => {
+                                    if (el) {
+                                        textLayerRefs.current.set(pageNum, el);
+                                    } else {
+                                        textLayerRefs.current.delete(pageNum);
+                                    }
+                                }}
+                                className="textLayer absolute inset-0"
                             />
 
                             {/* Loading placeholder */}

@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { usePdf } from "@/components/providers/pdf-provider";
-import { PdfViewer } from "@/components/pdf-viewer";
+// Dynamically import PdfViewer to avoid server-side usage of browser-only APIs (DOMMatrix)
+const PdfViewer = dynamic(() => import("@/components/pdf-viewer").then(mod => mod.PdfViewer), {
+    ssr: false,
+    loading: () => <div className="flex-1 bg-muted/20 animate-pulse" />
+});
 import { ThemeToggle } from "@/components/theme-toggle";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
