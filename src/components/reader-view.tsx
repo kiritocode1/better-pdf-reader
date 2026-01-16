@@ -243,7 +243,7 @@ export function ReaderView({ onMenuClick, onShowStats, currentStats, dashboard }
                                         <p>No distractions.</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-3 mt-8">
+                                {/* <div className="flex gap-3 mt-8">
                                     <a
                                         href="https://github.com/kiritocode1/better-pdf-reader"
                                         target="_blank"
@@ -272,7 +272,7 @@ export function ReaderView({ onMenuClick, onShowStats, currentStats, dashboard }
                                     >
                                         <HugeiconsIcon icon={Linkedin02Icon} size={24} />
                                     </button>
-                                </div>
+                                </div> */}
                             </div>
 
                             {/* Right Side - 8 Cols */}
@@ -306,18 +306,68 @@ export function ReaderView({ onMenuClick, onShowStats, currentStats, dashboard }
                                 </div>
                             </div>
 
-                            {/* Full Width Bottom Image */}
-                            <div className="col-span-1 md:col-span-12 relative h-[320px] bg-background border-t border-border group overflow-hidden">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src="/pixelated.png"
-                                    alt="The Poetics of Space"
-                                    className="absolute inset-0 w-full h-full object-cover grayscale opacity-50 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-700 ease-in-out"
-                                />
-                                <div className="absolute bottom-6 left-6 text-xs uppercase tracking-[0.3em] text-white/80 mix-blend-difference font-mono z-10">
-                                    The Poetics of Space
+                            {/* Split Bottom Section */}
+                            <div className="col-span-1 md:col-span-12 grid grid-cols-1 md:grid-cols-12 min-h-[320px] bg-background border-t border-border">
+                                {/* Left Side - Details & Socials (4 Cols) */}
+                                <div className="col-span-1 md:col-span-4 p-8 flex flex-col justify-between bg-background border-r border-border relative overflow-hidden group/social">
+                                    <div className="relative z-10">
+                                        <div className="text-xs uppercase tracking-[0.3em] text-muted-foreground font-mono mb-2">
+                                            The Poetics of Space
+                                        </div>
+                                        <div className="text-sm text-foreground/80 font-mono leading-relaxed max-w-[200px]">
+                                            A digital sanctuary for thoughtful reading. Organized. Minimal. Yours.
+                                        </div>
+                                    </div>
+
+                                    {/* Social Share grid */}
+                                    <div className="grid grid-cols-3 gap-px bg-border border border-border mt-8">
+                                        <div className="bg-background aspect-square relative group hover:bg-red-600 transition-colors">
+                                            <a
+                                                href="https://github.com/kiritocode1/better-pdf-reader"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="absolute inset-0 flex items-center justify-center text-foreground group-hover:text-white transition-colors"
+                                                title="GitHub"
+                                            >
+                                                <HugeiconsIcon icon={Github01Icon} size={20} />
+                                            </a>
+                                        </div>
+                                        <div className="bg-background aspect-square relative group hover:bg-red-600 transition-colors">
+                                            <button
+                                                onClick={() => {
+                                                    const text = "Check out Better PDF Reader by @kiritocode1";
+                                                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+                                                }}
+                                                className="absolute inset-0 w-full h-full flex items-center justify-center text-foreground group-hover:text-white transition-colors"
+                                                title="Share on X"
+                                            >
+                                                <HugeiconsIcon icon={NewTwitterIcon} size={20} />
+                                            </button>
+                                        </div>
+                                        <div className="bg-background aspect-square relative group hover:bg-red-600 transition-colors">
+                                            <button
+                                                onClick={() => {
+                                                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank');
+                                                }}
+                                                className="absolute inset-0 w-full h-full flex items-center justify-center text-foreground group-hover:text-white transition-colors"
+                                                title="Share on LinkedIn"
+                                            >
+                                                <HugeiconsIcon icon={Linkedin02Icon} size={20} />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+                                {/* Right Side - Box Shaped Image (8 Cols) */}
+                                <div className="col-span-1 md:col-span-8 relative bg-black overflow-hidden group">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src="/pixelated.png"
+                                        alt="Abstract visuals"
+                                        className="w-full h-full object-cover grayscale opacity-60 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-700 ease-in-out scale-105 group-hover:scale-100"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-background via-transpose to-transparent md:w-32" />
+                                </div>
                             </div>
                         </div>
                     </div>
