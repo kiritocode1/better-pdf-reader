@@ -91,36 +91,62 @@ export function ReadingTracker({ isOpen, onClose, stats, currentSessionFn, isPau
     }, [elapsed, stats.pagesRead]);
 
     // Generate REAL waveform data from history
-    // Each bar represents a page. Height = relative duration.
+    // We want a fixed number of bars that "scroll" as you read more pages
     const waveformBars = useMemo(() => {
-        const barsCount = 30; // Number of bars to display
+        const VISIBLE_BARS = 32;
         const history = stats.history || [];
 
-        // Add live page to history for visualization
-        const activeHistory = [...history];
-        if (!isPaused && stats.currentPage) {
-            activeHistory.push({
+        // Combine history + current live page
+        const allData = [...history];
+
+        // Always add the current live page if we have valid data
+        // even if paused, to show where we are
+        if (stats.currentPage) {
+            allData.push({
                 page: stats.currentPage,
-                duration: Math.max(1000, livePageDuration) // Minimum 1s visual
+                duration: isPaused ? (stats.getCurrentPageDuration ? stats.getCurrentPageDuration() : 0) : Math.max(100, livePageDuration)
             });
         }
 
-        // If no history, show flat line
-        if (activeHistory.length === 0) {
-            return new Array(barsCount).fill({ height: 5, page: 0 }); // 5% height baseline
+        // Calculate a moving maximum for scaling
+        // We look at the last few pages to determine the "scale" of the graph
+        // so one long page doesn't permanently flatten everything
+        const recentDurations = allData.slice(-VISIBLE_BARS).map(d => d.duration);
+        const maxDuration = Math.max(...recentDurations, 10000); // Minimum 10s baseline for scale
+
+        // Build the display array (padded to VISIBLE_BARS)
+        const bars = [];
+        for (let i = 0; i < VISIBLE_BARS; i++) {
+            // access from the end
+            const dataIndex = allData.length - 1 - i;
+
+            // Safe access pattern
+            const item = dataIndex >= 0 ? allData[dataIndex] : undefined;
+
+            if (item) {
+                // Non-linear scaling (sqrt) helps visualize shorter times better alongside long ones
+                const ratio = Math.sqrt(item.duration) / Math.sqrt(maxDuration);
+                const heightPercent = Math.min(100, Math.max(15, ratio * 100)); // Min 15% height
+
+                bars.unshift({
+                    type: 'data',
+                    height: heightPercent,
+                    page: item.page,
+                    active: dataIndex === allData.length - 1 && !isPaused
+                });
+            } else {
+                // Empty slot (future/past)
+                // Add explicit "noise" pattern for empty slots to look like an active device waiting
+                const noise = 8 + Math.sin(i * 0.8) * 4;
+                bars.unshift({
+                    type: 'empty',
+                    height: noise,
+                    page: 0,
+                    active: false
+                });
+            }
         }
-
-        // Get last N pages
-        const recentPages = activeHistory.slice(-barsCount);
-
-        // Find max duration for scaling (avoid div by zero)
-        const maxDuration = Math.max(...recentPages.map(p => p.duration), 1000); // min 1s baseline
-
-        return recentPages.map(page => {
-            // Scale 5% to 100%
-            const height = Math.max(5, (page.duration / maxDuration) * 100);
-            return { height, page: page.page };
-        });
+        return bars;
     }, [stats.history, livePageDuration, isPaused, stats.currentPage]);
 
     return (
@@ -137,69 +163,66 @@ export function ReadingTracker({ isOpen, onClose, stats, currentSessionFn, isPau
                     className="fixed bottom-8 right-8 z-50"
                 >
                     {/* Device Casing */}
-                    <div className="w-[280px] bg-[#E8E8E8] rounded-[32px] p-2.5 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.3)] border border-white/50 backdrop-blur-xl relative group">
+                    <div className="w-[300px] bg-[#1a1a1a] rounded-[32px] p-2.5 shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] border border-white/10 ring-1 ring-black/50 backdrop-blur-xl relative group">
 
                         {/* Grabbable Area Tip */}
                         <div
-                            className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-white/20 rounded-full cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
                             onPointerDown={(e) => controls.start(e)}
                         />
 
                         {/* Screen Area */}
-                        <div className="bg-[#1A1A1A] rounded-[24px] h-[340px] flex flex-col relative overflow-hidden shadow-inner ring-1 ring-black/5 mt-4">
-                            {/* Screen Glare/Texture Overlay */}
-                            <div className="absolute inset-0 bg-white/[0.02] mix-blend-overlay pointer-events-none" />
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent pointer-events-none" />
+                        <div className="bg-black rounded-[24px] h-[340px] flex flex-col relative overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
+                            {/* Screen Glare */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.03] to-transparent pointer-events-none z-20" />
 
                             {/* Status Bar */}
-                            <div className="flex justify-between items-center px-5 py-4 text-[10px] font-medium tracking-wider text-neutral-500 font-mono">
-                                <span>{currentTime}</span>
+                            <div className="flex justify-between items-center px-5 py-4 text-[10px] font-medium tracking-wider text-neutral-500 font-mono relative z-10">
+                                <span className="text-neutral-400">{currentTime}</span>
                                 <div className="flex items-center gap-2">
                                     {!isPaused ? (
-                                        <span className="flex items-center gap-1.5 text-red-500 animate-pulse">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                                            RECORDING
+                                        <span className="flex items-center gap-1.5 text-red-500 animate-pulse font-bold">
+                                            REC
+                                            <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
                                         </span>
                                     ) : (
-                                        <span className="text-neutral-600 flex items-center gap-1.5">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-neutral-600" />
+                                        <span className="text-neutral-600 flex items-center gap-1.5 font-bold">
                                             PAUSED
+                                            <div className="w-1.5 h-1.5 rounded-full bg-neutral-600" />
                                         </span>
                                     )}
-                                    <HugeiconsIcon icon={BatteryFullIcon} size={14} className="text-neutral-400 ml-1" />
                                 </div>
                             </div>
 
-                            {/* Waveform Visualization (Real Data) */}
-                            <div className="flex-1 flex items-end justify-center gap-[3px] px-6 pb-2 opacity-90 overflow-hidden">
-                                {waveformBars.length > 0 ? (
-                                    waveformBars.map((bar, i) => (
+                            {/* Waveform Visualization */}
+                            <div className="flex-1 flex items-end justify-between px-6 pb-4 pt-10 gap-[2px] relative z-10">
+                                {waveformBars.map((bar, i) => (
+                                    <div
+                                        key={i}
+                                        className="relative flex-1 flex flex-col justify-end group/bar h-full"
+                                    >
                                         <div
-                                            key={i}
-                                            className="relative flex-1 group/bar"
-                                        >
-                                            <div
-                                                className="w-full rounded-sm bg-neutral-700 transition-all duration-500 ease-out flex items-end justify-center"
-                                                style={{
-                                                    height: `${bar.height / 2 /* scale visual height down slightly to fit */}px`,
-                                                    minHeight: '4px',
-                                                    backgroundColor: !isPaused && i === waveformBars.length - 1 ? '#ef4444' : undefined
-                                                }}
-                                            />
-                                            {/* Tooltip for page number */}
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 text-[9px] bg-white text-black px-1 rounded opacity-0 group-hover/bar:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">
+                                            className={cn(
+                                                "w-full rounded-full transition-all duration-300 ease-out",
+                                                bar.type === 'data'
+                                                    ? (bar.active ? "bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.5)]" : "bg-white/40")
+                                                    : "bg-neutral-800/40"
+                                            )}
+                                            style={{
+                                                height: `${bar.height}%`,
+                                            }}
+                                        />
+                                        {/* Tooltip */}
+                                        {bar.type === 'data' && (
+                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 text-[9px] font-bold bg-white text-black px-1.5 py-0.5 rounded opacity-0 group-hover/bar:opacity-100 whitespace-nowrap pointer-events-none transition-opacity z-50">
                                                 Page {bar.page}
                                             </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="flex items-center justify-center w-full h-full text-neutral-700 text-[10px] font-mono tracking-widest uppercase">
-                                        Waiting for input...
+                                        )}
                                     </div>
-                                )}
+                                ))}
 
-                                {/* Center Line / Playhead */}
-                                <div className="absolute inset-x-0 bottom-8 h-px bg-white/5 pointer-events-none" />
+                                {/* Center/Base Line visual */}
+                                <div className="absolute inset-x-0 bottom-[1px] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
                             </div>
 
                             {/* Main Timer & Metrics */}

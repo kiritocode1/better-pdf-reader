@@ -15,6 +15,7 @@ import {
     Search01Icon,
     ArrowUp01Icon,
     ArrowDown01Icon,
+    ArrowRight01Icon,
     GridViewIcon,
 } from "@hugeicons/core-free-icons";
 
@@ -47,6 +48,8 @@ export function CommandPalette({ open, onClose, onShowStats }: CommandPalettePro
         closeDocument,
         pagesPerView,
         setPagesPerView,
+        totalPages,
+        goToPage,
     } = usePdf();
     const { theme, setTheme } = useTheme();
 
@@ -154,16 +157,39 @@ export function CommandPalette({ open, onClose, onShowStats }: CommandPalettePro
     ];
 
     // Filter commands based on query
-    const filteredCommands = query.trim() === ""
-        ? commands
-        : commands.filter((cmd) => {
-            const searchLower = query.toLowerCase();
-            return (
-                cmd.label.toLowerCase().includes(searchLower) ||
-                cmd.description?.toLowerCase().includes(searchLower) ||
-                cmd.keywords?.some((k) => k.toLowerCase().includes(searchLower))
-            );
-        });
+    // Check for page navigation command
+    const pageMatch = query.match(/^(?:>|goto|pg)\s+(\d+)$/i) || query.match(/^>(\d+)$/i);
+
+    let filteredCommands: Command[] = [];
+
+    if (pageMatch && pageMatch[1] && currentDocument) {
+        const pageNum = parseInt(pageMatch[1]);
+        if (pageNum >= 1 && pageNum <= totalPages) {
+            filteredCommands = [{
+                id: `goto-page-${pageNum}`,
+                label: `Go to Page ${pageNum}`,
+                description: "Jump to specific page",
+                icon: ArrowRight01Icon,
+                action: () => goToPage(pageNum),
+                keywords: ["goto", "jumpto"],
+                shortcut: "↵",
+            }];
+        }
+    }
+
+    if (filteredCommands.length === 0) {
+        filteredCommands = query.trim() === ""
+            ? commands
+            : commands.filter((cmd) => {
+                const searchLower = query.toLowerCase();
+                // Filter out commands that are not relevant when no document is open (if handled by filtering, but we handle it via the 'commands' array construction)
+                return (
+                    cmd.label.toLowerCase().includes(searchLower) ||
+                    (cmd.description || "").toLowerCase().includes(searchLower) ||
+                    cmd.keywords?.some((k) => k.toLowerCase().includes(searchLower))
+                );
+            });
+    }
 
     // Reset selection when query changes
     useEffect(() => {
