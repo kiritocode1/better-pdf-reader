@@ -16,7 +16,7 @@ importers:
         version: 1.1.0(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@effect/platform':
         specifier: ^0.94.1
-        version: 0.94.1(effect@3.19.14)
+        version: 0.94.1(effect@3.20.0)
       '@hugeicons/core-free-icons':
         specifier: ^3.1.1
         version: 3.1.1
@@ -33,8 +33,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       effect:
-        specifier: ^3.19.14
-        version: 3.19.14
+        specifier: ^3.20.0
+        version: 3.20.0
       framer-motion:
         specifier: ^12.26.2
         version: 12.26.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1242,8 +1242,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  effect@3.19.14:
-    resolution: {integrity: sha512-3vwdq0zlvQOxXzXNKRIPKTqZNMyGCdaFUBfMPqpsyzZDre67kgC1EEHDV4EoQTovJ4w5fmJW756f86kkuz7WFA==}
+  effect@3.20.0:
+    resolution: {integrity: sha512-qMLfDJscrNG8p/aw+IkT9W7fgj50Z4wG5bLBy0Txsxz8iUHjDIkOgO3SV0WZfnQbNG2VJYb0b+rDLMrhM4+Krw==}
 
   electron-to-chromium@1.5.267:
     resolution: {integrity: sha512-0Drusm6MVRXSOJpGbaSVgcQsuB4hEkMpHXaVstcPmhu5LIedxs1xNK/nIxmQIU/RPC0+1/o0AVZfBTkTNJOdUw==}
@@ -2691,9 +2691,9 @@ snapshots:
 
   '@effect/language-service@0.65.0': {}
 
-  '@effect/platform@0.94.1(effect@3.19.14)':
+  '@effect/platform@0.94.1(effect@3.20.0)':
     dependencies:
-      effect: 3.19.14
+      effect: 3.20.0
       find-my-way-ts: 0.1.6
       msgpackr: 1.11.8
       multipasta: 0.2.7
@@ -3418,7 +3418,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  effect@3.19.14:
+  effect@3.20.0:
     dependencies:
       '@standard-schema/spec': 1.1.0
       fast-check: 3.23.2
